@@ -14,7 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount_satoshis: number
+          created_at: string
+          fee_satoshis: number
+          id: string
+          is_broadcast: boolean
+          is_complete: boolean
+          raw_transaction: string | null
+          required_signatures: number
+          signatures: Json
+          to_address: string
+          transaction_hash: string | null
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          amount_satoshis: number
+          created_at?: string
+          fee_satoshis?: number
+          id?: string
+          is_broadcast?: boolean
+          is_complete?: boolean
+          raw_transaction?: string | null
+          required_signatures: number
+          signatures?: Json
+          to_address: string
+          transaction_hash?: string | null
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          amount_satoshis?: number
+          created_at?: string
+          fee_satoshis?: number
+          id?: string
+          is_broadcast?: boolean
+          is_complete?: boolean
+          raw_transaction?: string | null
+          required_signatures?: number
+          signatures?: Json
+          to_address?: string
+          transaction_hash?: string | null
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_index: number
+          owner_name: string | null
+          public_key: string
+          wallet_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_index: number
+          owner_name?: string | null
+          public_key: string
+          wallet_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_index?: number
+          owner_name?: string | null
+          public_key?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_keys_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_complete: boolean
+          m: number
+          n: number
+          name: string
+          script_hex: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_complete?: boolean
+          m: number
+          n: number
+          name: string
+          script_hex?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_complete?: boolean
+          m?: number
+          n?: number
+          name?: string
+          script_hex?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
