@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Copy, Shield, Key, Send, Users, Bitcoin, ArrowRight, CheckCircle } from "lucide-react";
+import { Copy, Shield, Key, Send, Users, Bitcoin, ArrowRight, CheckCircle, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MultisigConfig {
   m: number;
@@ -30,6 +31,7 @@ export const MultisigWallet = () => {
   const [transaction, setTransaction] = useState<Partial<Transaction>>({});
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { toast } = useToast();
+  const { signOut, user } = useAuth();
 
   const generateMockPubKey = () => {
     const chars = '0123456789abcdef';
@@ -118,13 +120,22 @@ export const MultisigWallet = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <div className="p-3 rounded-full bg-gradient-bitcoin">
-              <Bitcoin className="h-8 w-8 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-full bg-gradient-bitcoin">
+                <Bitcoin className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <div className="text-left">
+                <h1 className="text-4xl font-bold bg-gradient-bitcoin bg-clip-text text-transparent">
+                  Bitcoin Multisig Wallet
+                </h1>
+                <p className="text-muted-foreground">Welcome, {user?.email}</p>
+              </div>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-bitcoin bg-clip-text text-transparent">
-              Bitcoin Multisig Wallet
-            </h1>
+            <Button variant="outline" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Secure multi-signature Bitcoin wallet for enhanced security and collaborative fund management
