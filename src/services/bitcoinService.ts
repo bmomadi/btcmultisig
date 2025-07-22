@@ -1,7 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
 import { ECPairFactory } from 'ecpair';
-import { Buffer } from 'buffer';
 
 // Initialize bitcoin library with elliptic curve
 bitcoin.initEccLib(ecc);
