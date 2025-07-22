@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { walletService, type Wallet, type WalletKey, type Transaction } from "@/services/walletService";
 import { bitcoinService } from "@/services/bitcoinService";
+import { PrivateKeyBackup } from "./PrivateKeyBackup";
 
 interface MultisigConfig {
   m: number;
@@ -617,6 +618,9 @@ export const MultisigWallet = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Private Key Backup Section */}
+            <PrivateKeyBackup selectedWallet={selectedWallet} walletKeys={walletKeys} />
           </TabsContent>
 
           {/* Transactions Tab */}

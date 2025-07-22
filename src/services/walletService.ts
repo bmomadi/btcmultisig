@@ -4,6 +4,7 @@ import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/type
 export type Wallet = Tables<'wallets'>;
 export type WalletKey = Tables<'wallet_keys'>;
 export type Transaction = Tables<'transactions'>;
+export type KeyBackup = Tables<'key_backups'>;
 
 export const walletService = {
   // Wallet operations
@@ -122,6 +123,45 @@ export const walletService = {
         is_complete: isComplete
       })
       .eq('id', transactionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Key backup operations
+  async createKeyBackup(walletId: string, salt: string, iv: string) {
+    const { data, error } = await supabase
+      .from('key_backups')
+      .insert({
+        wallet_id: walletId,
+        salt,
+        iv
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getKeyBackup(walletId: string) {
+    const { data, error } = await supabase
+      .from('key_backups')
+      .select('*')
+      .eq('wallet_id', walletId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
+    return data;
+  },
+
+  async updateWalletKeyWithPrivateKey(keyId: string, encryptedPrivateKey: string) {
+    const { data, error } = await supabase
+      .from('wallet_keys')
+      .update({ encrypted_private_key: encryptedPrivateKey })
+      .eq('id', keyId)
       .select()
       .single();
 

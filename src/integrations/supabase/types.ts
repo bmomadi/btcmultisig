@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      key_backups: {
+        Row: {
+          created_at: string
+          id: string
+          iv: string
+          salt: string
+          updated_at: string
+          wallet_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          iv: string
+          salt: string
+          updated_at?: string
+          wallet_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          iv?: string
+          salt?: string
+          updated_at?: string
+          wallet_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -97,6 +124,7 @@ export type Database = {
       wallet_keys: {
         Row: {
           created_at: string
+          encrypted_private_key: string | null
           id: string
           key_index: number
           owner_name: string | null
@@ -105,6 +133,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          encrypted_private_key?: string | null
           id?: string
           key_index: number
           owner_name?: string | null
@@ -113,6 +142,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          encrypted_private_key?: string | null
           id?: string
           key_index?: number
           owner_name?: string | null
