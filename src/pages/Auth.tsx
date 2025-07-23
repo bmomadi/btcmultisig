@@ -63,19 +63,25 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log('Attempting sign in with:', { email: signInEmail, passwordLength: signInPassword.length });
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: signInEmail,
         password: signInPassword
       });
 
+      console.log('Sign in response:', { data, error });
+
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: "Sign In Error",
           description: error.message,
           variant: "destructive"
         });
       } else {
+        console.log('Sign in successful:', data);
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in."
@@ -83,6 +89,7 @@ const Auth = () => {
         navigate('/');
       }
     } catch (error) {
+      console.error('Sign in catch error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
