@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Copy, Shield, Key, Send, Users, Bitcoin, ArrowRight, CheckCircle, LogOut, AlertCircle } from "lucide-react";
+import { Copy, Shield, Key, Send, Users, Bitcoin, ArrowRight, CheckCircle, LogOut, AlertCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { walletService, type Wallet, type WalletKey, type Transaction } from "@/services/walletService";
@@ -238,6 +238,38 @@ export const MultisigWallet = () => {
       title: "Copied to clipboard",
       description: "Address copied successfully"
     });
+  };
+
+  const deleteWallet = async (walletId: string) => {
+    if (!confirm('Are you sure you want to delete this wallet? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await walletService.deleteWallet(walletId);
+      
+      // Reload wallets and reset selection
+      await loadWallets();
+      if (selectedWallet?.id === walletId) {
+        setSelectedWallet(null);
+        setWalletKeys([]);
+        setTransactions([]);
+      }
+      
+      toast({
+        title: "Wallet Deleted",
+        description: "Wallet has been permanently deleted"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete wallet",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const createTransaction = async () => {
@@ -573,13 +605,21 @@ export const MultisigWallet = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Wallet Name</Label>
-                        <div className="p-3 bg-muted rounded-lg">
-                          <span className="font-medium">{selectedWallet.name}</span>
-                        </div>
-                      </div>
+                     <div className="space-y-4">
+                       <div>
+                         <Label>Wallet Name</Label>
+                         <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                           <span className="font-medium">{selectedWallet.name}</span>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => deleteWallet(selectedWallet.id)}
+                             className="text-destructive hover:text-destructive"
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         </div>
+                       </div>
                       
                       {selectedWallet.address && (
                         <div>

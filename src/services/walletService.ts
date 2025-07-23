@@ -167,5 +167,14 @@ export const walletService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async deleteWallet(id: string) {
+    const { error } = await supabase
+      .from('wallets')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   }
 };

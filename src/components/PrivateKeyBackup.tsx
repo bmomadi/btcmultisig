@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { walletService, type Wallet, type WalletKey, type KeyBackup } from "@/services/walletService";
 import { cryptoService } from "@/services/cryptoService";
 import { bitcoinService } from "@/services/bitcoinService";
+import CryptoJS from 'crypto-js';
 
 interface PrivateKeyBackupProps {
   selectedWallet: Wallet | null;
@@ -81,25 +82,32 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
       // Generate private keys for each wallet key
       const privateKeys = generatePrivateKeys();
       
-      // Create encryption parameters once for the wallet
+      // Generate shared salt and IV for all keys in the wallet
       const dummyData = "test";
       const encryptionResult = cryptoService.encrypt(dummyData, password);
       
-      // Create key backup record
+      // Create key backup record with shared parameters
       const backup = await walletService.createKeyBackup(
         selectedWallet.id,
         encryptionResult.salt,
         encryptionResult.iv
       );
       
-      // Encrypt and store each private key
+      // Encrypt and store each private key using the shared salt and IV
       for (const walletKey of walletKeys) {
         const privateKey = privateKeys[walletKey.id];
-        const encrypted = cryptoService.encrypt(privateKey, password);
+        
+        // Use the shared salt and IV for all keys
+        const key = cryptoService.deriveKey(password, encryptionResult.salt);
+        const encrypted = CryptoJS.AES.encrypt(privateKey, key, {
+          iv: CryptoJS.enc.Hex.parse(encryptionResult.iv),
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7
+        });
         
         await walletService.updateWalletKeyWithPrivateKey(
           walletKey.id,
-          encrypted.encryptedData
+          encrypted.toString()
         );
       }
 
