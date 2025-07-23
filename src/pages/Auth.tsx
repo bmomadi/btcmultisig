@@ -10,9 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -23,8 +26,8 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: signUpEmail,
+        password: signUpPassword,
         options: {
           emailRedirectTo: `${window.location.origin}/`
         }
@@ -38,9 +41,12 @@ const Auth = () => {
         });
       } else {
         toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to complete your registration."
+          title: "Account created successfully!",
+          description: "You can now sign in with your credentials."
         });
+        // Switch to sign in tab and clear sign up form
+        setSignUpEmail('');
+        setSignUpPassword('');
       }
     } catch (error) {
       toast({
@@ -59,8 +65,8 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+        email: signInEmail,
+        password: signInPassword
       });
 
       if (error) {
@@ -126,8 +132,8 @@ const Auth = () => {
                       id="signin-email"
                       type="email"
                       placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={signInEmail}
+                      onChange={(e) => setSignInEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -136,10 +142,10 @@ const Auth = () => {
                     <div className="relative">
                       <Input
                         id="signin-password"
-                        type={showPassword ? "text" : "password"}
+                        type={showSignInPassword ? "text" : "password"}
                         placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={signInPassword}
+                        onChange={(e) => setSignInPassword(e.target.value)}
                         required
                       />
                       <Button
@@ -147,9 +153,9 @@ const Auth = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowSignInPassword(!showSignInPassword)}
                       >
-                        {showPassword ? (
+                        {showSignInPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
                           <Eye className="h-4 w-4" />
@@ -171,8 +177,8 @@ const Auth = () => {
                       id="signup-email"
                       type="email"
                       placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -181,10 +187,10 @@ const Auth = () => {
                     <div className="relative">
                       <Input
                         id="signup-password"
-                        type={showPassword ? "text" : "password"}
+                        type={showSignUpPassword ? "text" : "password"}
                         placeholder="Create a password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={signUpPassword}
+                        onChange={(e) => setSignUpPassword(e.target.value)}
                         required
                         minLength={6}
                       />
@@ -193,9 +199,9 @@ const Auth = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
                       >
-                        {showPassword ? (
+                        {showSignUpPassword ? (
                           <EyeOff className="h-4 w-4" />
                         ) : (
                           <Eye className="h-4 w-4" />
