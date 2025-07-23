@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Shield, Key, Lock, Unlock, AlertTriangle, Download, Eye, EyeOff } from "lucide-react";
+import { Shield, Key, Lock, Unlock, AlertTriangle, Download, Eye, EyeOff, Upload, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { walletService, type Wallet, type WalletKey, type KeyBackup } from "@/services/walletService";
 import { cryptoService } from "@/services/cryptoService";
@@ -27,6 +27,7 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
   const [decryptedKeys, setDecryptedKeys] = useState<Record<string, string>>({});
   const [showDecryptedKeys, setShowDecryptedKeys] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -214,6 +215,136 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
     });
   };
 
+  const exportEncryptedBackup = () => {
+    if (!keyBackup || !selectedWallet) {
+      toast({
+        title: "Error",
+        description: "No backup available to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const encryptedBackupData = {
+      version: "1.0",
+      walletId: selectedWallet.id,
+      walletName: selectedWallet.name,
+      walletConfig: {
+        m: selectedWallet.m,
+        n: selectedWallet.n,
+        address: selectedWallet.address
+      },
+      encryption: {
+        salt: keyBackup.salt,
+        iv: keyBackup.iv
+      },
+      created: keyBackup.created_at,
+      encryptedKeys: walletKeys.map((key, index) => ({
+        index: key.key_index,
+        publicKey: key.public_key,
+        encryptedPrivateKey: key.encrypted_private_key || null,
+        ownerName: key.owner_name,
+        keyId: key.id
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(encryptedBackupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `encrypted-backup-${selectedWallet.name || 'wallet'}-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Encrypted Backup Exported",
+      description: "Encrypted backup file has been saved to your device"
+    });
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+    }
+  };
+
+  const importEncryptedBackup = async () => {
+    if (!importFile) {
+      toast({
+        title: "Error",
+        description: "Please select a backup file to import",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const fileContent = await importFile.text();
+      const backupData = JSON.parse(fileContent);
+
+      // Validate backup format
+      if (!backupData.version || !backupData.walletId || !backupData.encryption || !backupData.encryptedKeys) {
+        throw new Error("Invalid backup file format");
+      }
+
+      // Check if this backup belongs to the current wallet
+      if (selectedWallet && backupData.walletId !== selectedWallet.id) {
+        toast({
+          title: "Warning",
+          description: "This backup belongs to a different wallet. Import anyway?",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Import the encryption parameters
+      if (!keyBackup) {
+        const backup = await walletService.createKeyBackup(
+          backupData.walletId,
+          backupData.encryption.salt,
+          backupData.encryption.iv
+        );
+        setKeyBackup(backup);
+      }
+
+      // Import encrypted private keys
+      for (const keyData of backupData.encryptedKeys) {
+        if (keyData.encryptedPrivateKey) {
+          // Find the corresponding wallet key
+          const walletKey = walletKeys.find(k => k.public_key === keyData.publicKey);
+          if (walletKey) {
+            await walletService.updateWalletKeyWithPrivateKey(
+              walletKey.id,
+              keyData.encryptedPrivateKey
+            );
+          }
+        }
+      }
+
+      setImportFile(null);
+      // Reset file input
+      const fileInput = document.getElementById('import-file') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+
+      toast({
+        title: "Backup Imported",
+        description: "Encrypted backup has been successfully imported"
+      });
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: "Failed to import backup file. Please check the file format.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!selectedWallet) {
     return (
       <Card className="shadow-card">
@@ -325,12 +456,20 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
                   <Separator />
                   
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Decrypted Private Keys</h4>
-                    <Button variant="outline" onClick={downloadBackup}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Backup
-                    </Button>
+                    <h4 className="font-medium">Backup Management</h4>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={exportEncryptedBackup}>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Export Encrypted
+                      </Button>
+                      <Button variant="outline" onClick={downloadBackup}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Decrypted
+                      </Button>
+                    </div>
                   </div>
+                  
+                  <h5 className="font-medium">Decrypted Private Keys</h5>
                   
                   <div className="space-y-3">
                     {walletKeys.map((walletKey, index) => {
@@ -383,6 +522,43 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
                   </div>
                 </div>
               )}
+              
+              {/* Import/Export Section */}
+              <div className="space-y-4">
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-4">Import Encrypted Backup</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="import-file">Select Backup File</Label>
+                      <Input
+                        id="import-file"
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileSelect}
+                        className="cursor-pointer"
+                      />
+                    </div>
+                    
+                    {importFile && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{importFile.name}</span>
+                          <Button
+                            onClick={importEncryptedBackup}
+                            disabled={loading}
+                            size="sm"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {loading ? "Importing..." : "Import Backup"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
