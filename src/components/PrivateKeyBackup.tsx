@@ -94,21 +94,17 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
         encryptionResult.iv
       );
       
-      // Encrypt and store each private key using the shared salt and IV
+      // Encrypt and store each private key using consistent encryption method
       for (const walletKey of walletKeys) {
         const privateKey = privateKeys[walletKey.id];
         
-        // Use the shared salt and IV for all keys
-        const key = cryptoService.deriveKey(password, encryptionResult.salt);
-        const encrypted = CryptoJS.AES.encrypt(privateKey, key, {
-          iv: CryptoJS.enc.Hex.parse(encryptionResult.iv),
-          mode: CryptoJS.mode.CBC,
-          padding: CryptoJS.pad.Pkcs7
-        });
+        // Use the cryptoService.encrypt method for consistency
+        const encryptedPrivateKey = cryptoService.encrypt(privateKey, password);
         
+        // Store the encrypted data with the shared salt and IV
         await walletService.updateWalletKeyWithPrivateKey(
           walletKey.id,
-          encrypted.toString()
+          encryptedPrivateKey.encryptedData
         );
       }
 
@@ -121,6 +117,7 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
         description: "Private keys have been encrypted and backed up securely"
       });
     } catch (error) {
+      console.error('Backup creation error:', error);
       toast({
         title: "Error",
         description: "Failed to create backup",
@@ -145,9 +142,12 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
       setIsDecrypting(true);
       const decrypted: Record<string, string> = {};
       
+      console.log('Attempting to decrypt keys with backup:', keyBackup);
+      
       for (const walletKey of walletKeys) {
         if (walletKey.encrypted_private_key) {
           try {
+            console.log(`Decrypting key ${walletKey.id}...`);
             const decryptedKey = cryptoService.decrypt(
               walletKey.encrypted_private_key,
               decryptPassword,
@@ -155,7 +155,9 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
               keyBackup.iv
             );
             decrypted[walletKey.id] = decryptedKey;
+            console.log(`Successfully decrypted key ${walletKey.id}`);
           } catch (error) {
+            console.error(`Failed to decrypt key ${walletKey.id}:`, error);
             throw new Error("Invalid password or corrupted backup");
           }
         }
@@ -169,6 +171,7 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
         description: "Private keys have been successfully decrypted"
       });
     } catch (error) {
+      console.error('Decryption error:', error);
       toast({
         title: "Error",
         description: "Failed to decrypt backup. Please check your password.",
@@ -467,6 +470,16 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
                         Download Decrypted
                       </Button>
                     </div>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      💡 <strong>Export Options:</strong>
+                    </p>
+                    <ul className="text-xs text-blue-600 dark:text-blue-400 mt-1 ml-4 list-disc">
+                      <li><strong>Export Encrypted:</strong> Save encrypted backup that can be imported later</li>
+                      <li><strong>Download Decrypted:</strong> Save readable JSON with private keys (less secure)</li>
+                    </ul>
                   </div>
                   
                   <h5 className="font-medium">Decrypted Private Keys</h5>
