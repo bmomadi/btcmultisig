@@ -582,85 +582,203 @@ export const MultisigWallet = () => {
 
           {/* Manage Tab */}
           <TabsContent value="manage" className="space-y-6">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Wallet Information</CardTitle>
-                <CardDescription>Current wallet configuration and status</CardDescription>
-              </CardHeader>
-                <CardContent className="space-y-4">
-                {selectedWallet ? (
-                  <>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-muted rounded-lg">
-                        <div className="text-2xl font-bold text-primary">{selectedWallet.m}-of-{selectedWallet.n}</div>
-                        <div className="text-sm text-muted-foreground">Signature Scheme</div>
-                      </div>
-                      <div className="p-4 bg-muted rounded-lg">
-                        <div className="text-2xl font-bold text-primary">{walletKeys.length}</div>
-                        <div className="text-sm text-muted-foreground">Public Keys Added</div>
-                      </div>
-                      <div className="p-4 bg-muted rounded-lg">
-                        <div className="text-2xl font-bold text-primary">{transactions.length}</div>
-                        <div className="text-sm text-muted-foreground">Total Transactions</div>
-                      </div>
-                    </div>
-                    
-                     <div className="space-y-4">
-                       <div>
-                         <Label>Wallet Name</Label>
-                         <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                           <span className="font-medium">{selectedWallet.name}</span>
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => deleteWallet(selectedWallet.id)}
-                             className="text-destructive hover:text-destructive"
-                           >
-                             <Trash2 className="h-4 w-4" />
-                           </Button>
-                         </div>
-                       </div>
-                      
-                      {selectedWallet.address && (
-                        <div>
-                          <Label>Multisig Address</Label>
-                          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                            <code className="flex-1 text-sm">{selectedWallet.address}</code>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(selectedWallet.address!)}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Wallet List */}
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    My Wallets
+                  </CardTitle>
+                  <CardDescription>Select a wallet to view details</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {wallets.length > 0 ? (
+                    <div className="space-y-2">
+                      {wallets.map((wallet) => (
+                        <div
+                          key={wallet.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted ${
+                            selectedWallet?.id === wallet.id ? 'border-primary bg-primary/5' : 'border-border'
+                          }`}
+                          onClick={() => setSelectedWallet(wallet)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">{wallet.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {wallet.m}-of-{wallet.n} multisig
+                              </p>
+                            </div>
+                            <Badge variant={wallet.is_complete ? "default" : "secondary"}>
+                              {wallet.is_complete ? "Complete" : "Setup"}
+                            </Badge>
                           </div>
                         </div>
-                      )}
-                      
-                      <div>
-                        <Label>Status</Label>
-                        <div className="p-3 bg-muted rounded-lg">
-                          <Badge variant={selectedWallet.is_complete ? "default" : "secondary"}>
-                            {selectedWallet.is_complete ? "Complete" : "Setup Required"}
-                          </Badge>
-                        </div>
-                      </div>
+                      ))}
                     </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Shield className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        No wallets created yet
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Wallet Details */}
+              <div className="md:col-span-2 space-y-6">
+                {selectedWallet ? (
+                  <>
+                    <Card className="shadow-card">
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>{selectedWallet.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteWallet(selectedWallet.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </CardTitle>
+                        <CardDescription>Wallet configuration and status</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="p-4 bg-muted rounded-lg">
+                            <div className="text-2xl font-bold text-primary">{selectedWallet.m}-of-{selectedWallet.n}</div>
+                            <div className="text-sm text-muted-foreground">Signature Scheme</div>
+                          </div>
+                          <div className="p-4 bg-muted rounded-lg">
+                            <div className="text-2xl font-bold text-primary">{walletKeys.length}</div>
+                            <div className="text-sm text-muted-foreground">Public Keys</div>
+                          </div>
+                          <div className="p-4 bg-muted rounded-lg">
+                            <div className="text-2xl font-bold text-primary">{transactions.length}</div>
+                            <div className="text-sm text-muted-foreground">Transactions</div>
+                          </div>
+                        </div>
+                        
+                        {selectedWallet.address && (
+                          <div>
+                            <Label>Multisig Address</Label>
+                            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                              <code className="flex-1 text-sm break-all">{selectedWallet.address}</code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(selectedWallet.address!)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedWallet.script_hex && (
+                          <div>
+                            <Label>Redemption Script</Label>
+                            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                              <code className="flex-1 text-sm break-all font-mono">{selectedWallet.script_hex}</code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(selectedWallet.script_hex!)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <Label>Status</Label>
+                          <div className="p-3 bg-muted rounded-lg">
+                            <Badge variant={selectedWallet.is_complete ? "default" : "secondary"}>
+                              {selectedWallet.is_complete ? "Complete" : "Setup Required"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Public Keys and Private Keys Details */}
+                    {walletKeys.length > 0 && (
+                      <Card className="shadow-card">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Key className="h-5 w-5 text-primary" />
+                            Wallet Keys Details
+                          </CardTitle>
+                          <CardDescription>Public keys and their associated private keys</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {walletKeys.map((walletKey, index) => (
+                              <div key={walletKey.id} className="p-4 border rounded-lg space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium">{walletKey.owner_name || `Key ${index + 1}`}</h4>
+                                  <Badge variant="outline">Index {walletKey.key_index}</Badge>
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs">Public Key</Label>
+                                  <div className="flex items-center gap-2 p-2 bg-muted rounded mt-1">
+                                    <code className="flex-1 text-xs break-all font-mono">{walletKey.public_key}</code>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => copyToClipboard(walletKey.public_key)}
+                                    >
+                                      <Copy className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {walletKey.encrypted_private_key && (
+                                  <div>
+                                    <Label className="text-xs">Encrypted Private Key</Label>
+                                    <div className="flex items-center gap-2 p-2 bg-muted rounded mt-1">
+                                      <code className="flex-1 text-xs break-all font-mono text-orange-600">
+                                        {walletKey.encrypted_private_key.substring(0, 40)}...
+                                      </code>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => copyToClipboard(walletKey.encrypted_private_key!)}
+                                      >
+                                        <Copy className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Private Key Backup Section */}
+                    <PrivateKeyBackup selectedWallet={selectedWallet} walletKeys={walletKeys} />
                   </>
                 ) : (
-                  <div className="text-center py-8">
-                    <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Wallet Selected</h3>
-                    <p className="text-muted-foreground">
-                      Create a wallet in the Setup tab to get started.
-                    </p>
-                  </div>
+                  <Card className="shadow-card">
+                    <CardContent className="text-center py-12">
+                      <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Select a Wallet</h3>
+                      <p className="text-muted-foreground">
+                        Choose a wallet from the list to view its details and manage private keys.
+                      </p>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Private Key Backup Section */}
-            <PrivateKeyBackup selectedWallet={selectedWallet} walletKeys={walletKeys} />
+              </div>
+            </div>
           </TabsContent>
 
           {/* Transactions Tab */}
