@@ -98,10 +98,9 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
       for (const walletKey of walletKeys) {
         const privateKey = privateKeys[walletKey.id];
         
-        // Use the cryptoService.encrypt method for consistency
+        // Encrypt and store each private key using consistent encryption method
         const encryptedPrivateKey = cryptoService.encrypt(privateKey, password);
         
-        // Store the encrypted data with the shared salt and IV
         await walletService.updateWalletKeyWithPrivateKey(
           walletKey.id,
           encryptedPrivateKey.encryptedData
@@ -148,6 +147,7 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
         if (walletKey.encrypted_private_key) {
           try {
             console.log(`Decrypting key ${walletKey.id}...`);
+            // Use the shared salt and IV from the backup, not individual encryption
             const decryptedKey = cryptoService.decrypt(
               walletKey.encrypted_private_key,
               decryptPassword,
@@ -452,23 +452,24 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
                   <Unlock className="h-4 w-4 mr-2" />
                   {isDecrypting ? "Decrypting..." : "Decrypt Private Keys"}
                 </Button>
-              </div>
-
-              {Object.keys(decryptedKeys).length > 0 && (
+                
+                {/* Export buttons available even without decryption */}
                 <div className="space-y-4">
                   <Separator />
                   
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Backup Management</h4>
+                    <h4 className="font-medium">Export Options</h4>
                     <div className="flex gap-2">
                       <Button variant="outline" onClick={exportEncryptedBackup}>
                         <FileDown className="h-4 w-4 mr-2" />
-                        Export Encrypted
+                        Export Encrypted JSON
                       </Button>
-                      <Button variant="outline" onClick={downloadBackup}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Decrypted
-                      </Button>
+                      {Object.keys(decryptedKeys).length > 0 && (
+                        <Button variant="outline" onClick={downloadBackup}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download Decrypted JSON
+                        </Button>
+                      )}
                     </div>
                   </div>
                   
@@ -477,12 +478,18 @@ export const PrivateKeyBackup: React.FC<PrivateKeyBackupProps> = ({ selectedWall
                       💡 <strong>Export Options:</strong>
                     </p>
                     <ul className="text-xs text-blue-600 dark:text-blue-400 mt-1 ml-4 list-disc">
-                      <li><strong>Export Encrypted:</strong> Save encrypted backup that can be imported later</li>
-                      <li><strong>Download Decrypted:</strong> Save readable JSON with private keys (less secure)</li>
+                      <li><strong>Export Encrypted JSON:</strong> Save encrypted backup that can be imported later</li>
+                      <li><strong>Download Decrypted JSON:</strong> Save readable JSON with private keys (requires decryption first)</li>
                     </ul>
                   </div>
+                </div>
+              </div>
+
+              {Object.keys(decryptedKeys).length > 0 && (
+                <div className="space-y-4">
+                  <Separator />
                   
-                  <h5 className="font-medium">Decrypted Private Keys</h5>
+                  <h4 className="font-medium">Decrypted Private Keys</h4>
                   
                   <div className="space-y-3">
                     {walletKeys.map((walletKey, index) => {
